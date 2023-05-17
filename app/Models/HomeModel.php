@@ -9,136 +9,46 @@ class HomeModel extends Model
 {
 
     /**
-     * @param post array
-     * @param file array
-     * @return msg array
-     * 
-     * Details: This is a reusable method used to insert & update employee
+     * This method is used to save scrape data in database
      */
-    public function insert_edit_employee($post, $files)
+    public function add_scrape(array $post, bool $type = true)
     {
-
-        /**
-         * Check weather user has entered employee di which is already exist db
-         * 
-         */
-        $gmodel = new GeneralModel();
-        $emp_id = $gmodel->get_array_table('employees', array('emp_id' => $post['emp_id'], 'id !=' => $post['id']));
-
-
-        if (!empty($emp_id)) {
-            $msg = array('st' => 'fail', 'msg' => "Employee Id Alredy Exist..!");
-            return $msg;
-        }
-
-
-        /**
-         * Image Upload process here
-         */
-        $imgs = array();
-        foreach ($files as $file) {
-            if ($file->isValid() && !$file->hasMoved()) {
-                $original_path = '/server/' . date('Ymd') . '/';
-
-                if (!file_exists(getcwd() . $original_path)) {
-                    mkdir(getcwd() . $original_path, 0777, true);
-                }
-
-                $newName = $file->getRandomName();
-                $file->move(getcwd() . $original_path, $newName);
-
-                $imgs[] = $original_path . $newName;
-            }
-        }
-
         $db = $this->db;
-        $builder = $db->table('employees');
-        $builder->select('*');
-        $builder->where(array("id" => $post['id']));
-        $builder->limit(1);
-        $result = $builder->get();
-        $result_array = $result->getRow();
-        $msg = array();
 
-        $data = array(
-            'emp_id' => $post['emp_id'],
-            'name' => $post['name'],
-            'dob' => $post['dob'],
-            'email' => $post['email'],
-            'mobile_no' => $post['mobile_no'],
-            'start_date' => $post['start_date'],
-            'end_date' => $post['end_date'],
-            'salary' => $post['salary'],
-        );
+        if ($type === false) {
 
-        if (!empty($imgs)) {
-            $data['imgs'] = json_encode($imgs);
-        }
-
-        if (!empty($result_array)) {
-            /**
-             * update data here
-             */
-            $data['updated_at'] = date('Y-m-d H:i:s');
-            $data['updated_by'] = '1'; //later we can use session to access user logged id
-
-            if (empty($msg)) {
-                $builder->where(array("id" => $post['id']));
-                $result = $builder->Update($data);
-                if ($result) {
-                    $msg = array('st' => 'success', 'msg' => "Your Details updated Successfully..!!");
-                } else {
-                    $msg = array('st' => 'fail', 'msg' => "Your Details Updated fail");
-                }
-            }
+            $builder = $db->table('link_names');
+            $builder->select('link_name');
+            $builder->where(array("link_name" => $post['link_name']));
         } else {
 
-            /**
-             * Insert data here
-             */
-
-            $data['created_at'] = date('Y-m-d H:i:s');
-            $data['created_by'] = '1'; //later we can use session to access user logged id
-
-            if (empty($msg)) {
-                $result = $builder->Insert($data);
-                if ($result) {
-                    $msg = array('st' => 'success', 'msg' => "Your Details Added Successfully..!!");
-                } else {
-                    $msg = array('st' => 'fail', 'msg' => "Something Went Wrong!!!");
-                }
-            }
+            $builder = $db->table('link_data');
+            $builder->select('title');
+            $builder->where(array("title" => $post['title']));
         }
+
+        $builder->limit(1);
+        $builder->orderBy('id', 'DESC');
+        $result = $builder->get();
+        $result_data = $result->getRow();
+        $msg = array();
+
+        if (empty($result_data)) {
+            $status =  $builder->insert($post);
+            $id = @$db->insertID();
+
+            if ($status) {
+                $msg = array('st', 'success', 'msg' => "Successfully saved", "id" => $id);
+            } else {
+                $msg = array('st', 'failed', 'msg' => "already exist in database");
+            }
+        } else {
+            $msg = array('st', 'failed', 'msg' => "already exist in database");
+        }
+
 
         return $msg;
     }
-
-
-
-    /**
-     * This method is used to save scrape data in database
-     */
-    public function add_scrape($post)
-    {
-
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

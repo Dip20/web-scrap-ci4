@@ -3,7 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\HomeModel;
-use App\Models\GeneralModel;
+// use App\Models\GeneralModel;
 
 
 class Home extends BaseController
@@ -11,7 +11,7 @@ class Home extends BaseController
     public function __construct()
     {
         $this->model = new HomeModel();
-        $this->gmodel = new GeneralModel();
+        // $this->gmodel = new GeneralModel();
         include('simple_html_dom.php');
     }
 
@@ -30,12 +30,15 @@ class Home extends BaseController
              * link which need to scrape of stackoverflow
              * don't forget to add pagesize
              */
-            $link = "https://stackoverflow.com/questions/tagged/c?tab=newest&pagesize=15";
+            $link = $post['link'];
 
             /**
              * call function
              */
-            $this->process($link);
+            $status = $this->process($link, $post);
+            echo '<pre>';
+            print_r($status);
+            exit;
         }
 
         return view('index', $data);
@@ -45,35 +48,64 @@ class Home extends BaseController
 
 
 
-    public function process(string $link)
+    public function process(string $link, array $postdata)
     {
+        ini_set('memory_limit', -1);
         $count = $this->get_content($link, true);
 
         $limit = 15;
         $pages = ceil((int) $count / $limit);
-        $pages = 4; // as of now we set limit 4 pages to retrived
+        $pages = 3; // as of now we set limit 4 pages to retrived
         $i = 1;
 
+        /**
+         * Here i am inserting the link name & count
+         */
+        $link_data = array(
+            'link_name' => $postdata['link_name'],
+            'link' => $postdata['link'],
+            'total_questions' => @$count,
+            'created_at' => date("Y-m-d H:i:s")
+        );
+
+        $id = $this->model->add_scrape($link_data, false);
+
+
+        return;
+        $data = array();
         for ($j = 1; $j < $pages; $j++) {
 
             $link_with_page = ($j == 1) ? $link : $link . "&page=$j";
             $html =  $this->get_content($link_with_page);
 
-            // find all link
-            foreach ($html->find('.s-post-summary.js-post-summary') as $e) {
+            if (!empty($html)) {
+                // find all link
+                foreach ($html->find('.s-post-summary.js-post-summary') as $e) {
+                    $data[$i][] = array(
+                        'title' => $e->find('.s-link', 0)->plaintext,
+                        'votes' =>  $e->find('.s-post-summary--stats-item-number', 0),
+                        'answer' => $e->find('.s-post-summary--stats-item-number', 1),
+                        'accepted_ans' =>  empty($e->find('.svg-icon.iconCheckmarkSm', 0)) ? 0 : 1,
+                        'views' => $e->find('.s-post-summary--stats-item-number', 2)
+                    );
+                    echo '<pre>';
+                    print_r($data);
+                    exit;
 
-                echo  $i . ": " . $e->find('.s-link', 0)->plaintext . " | ";
-                echo  $e->find('.s-post-summary--stats-item-unit', 0) . ": " . $e->find('.s-post-summary--stats-item-number', 0)   . " | ";
-                echo  $e->find('.s-post-summary--stats-item-unit', 1) . ": " . $e->find('.s-post-summary--stats-item-number', 1)   . " | ";
-                echo  "Accecpted: " . $e->find('.svg-icon.iconCheckmarkSm', 0)   . '|';
-                echo  $e->find('.s-post-summary--stats-item-unit', 2) . ": " . $e->find('.s-post-summary--stats-item-number', 2)   . '<br>';
-                $i++;
-            }
+                    // echo  $i . ": " . $e->find('.s-link', 0)->plaintext . " | ";
+                    // echo  $e->find('.s-post-summary--stats-item-unit', 0) . ": " . $e->find('.s-post-summary--stats-item-number', 0)   . " | ";
+                    // echo  $e->find('.s-post-summary--stats-item-unit', 1) . ": " . $e->find('.s-post-summary--stats-item-number', 1)   . " | ";
+                    // echo  "Accecpted: " . $e->find('.svg-icon.iconCheckmarkSm', 0)   . '|';
+                    // echo  $e->find('.s-post-summary--stats-item-unit', 2) . ": " . $e->find('.s-post-summary--stats-item-number', 2)   . '<br>';
+                    $i++;
+                }
 
-            if ($j == 5) {
-                break;
+                if ($j == 5) {
+                    break;
+                }
             }
         }
+        return $data;
     }
 
 
@@ -87,20 +119,23 @@ class Home extends BaseController
      */
     public function get_content(string $link, bool $get_count = false)
     {
+        $output = array();
         $html = file_get_html($link);
 
-        if ($get_count === true) {
-            $raw = $html->find('.fs-body3', 0)->plaintext . "<br>";
+        if ($html !== "Invalid Request") {
+            if ($get_count === true) {
+                $raw = $html->find('.fs-body3', 0)->plaintext . "<br>";
 
-            if (!empty($raw)) {
-                $count = explode("questions", $raw);
-                $count = trim($count[0]);
-                $count = str_replace(",", "", $count);
+                if (!empty($raw)) {
+                    $count = explode("questions", $raw);
+                    $count = trim($count[0]);
+                    $count = str_replace(",", "", $count);
+                }
+
+                $output = (int) $count;
+            } else {
+                $output = $html;
             }
-
-            $output = (int) $count;
-        } else {
-            $output = $html;
         }
 
         return $output;

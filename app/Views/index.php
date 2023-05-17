@@ -13,13 +13,19 @@
 
                 <div class="app-card-body">
 
-                    <form action="<?= base_url('Home/index') ?>" class="ajax-form-submit1" method="post">
+                    <form action="<?= base_url('Home/index') ?>" class="ajax-form-submit" method="post">
                         <input type="hidden" id="id" name="id" value="">
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <div class="form-group">
                                     <label class="mb-2">Link</label>
-                                    <input type="link" name="link" id="link" placeholder="Enter Link" class="form-control" required>
+                                    <input type="link" name="link" id="link" placeholder="Enter Link" class="form-control" value="https://stackoverflow.com/questions/tagged/c?tab=newest&pagesize=15" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="form-group">
+                                    <label class="mb-2">Link Name</label>
+                                    <input type="text" name="linkname" id="linkname" placeholder="Enter lin kname" class="form-control" value="C" required>
                                 </div>
                             </div>
                         </div>
@@ -28,7 +34,8 @@
                         <div class="error-msg text-danger"></div>
                         <div class="col-md-12 mt-4">
                             <p class="text-start">
-                                <button class="btn app-btn-primary" id="save_data" type="submit">Submit</button>
+                                <span class="text-muted">Note: As of now it will load only first 4pages data, later we can use cron job to scrape all pages, I have Already Implemented Pagination.</span> <br>
+                                <button class="btn app-btn-primary mt-3" id="save_data" type="submit">Submit</button>
                             </p>
                         </div>
                     </form>
