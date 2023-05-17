@@ -68,10 +68,5 @@ abstract class BaseController extends Controller
 
         if (!defined('ASSETS'))
             define('ASSETS', BASE . 'assets/');
-
-        /**
-         * autoload helper
-         */
-        helper('simple_html_dom');
     }
 }

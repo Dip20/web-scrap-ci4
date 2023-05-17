@@ -18,12 +18,12 @@ class HomeModel extends Model
         if ($type === false) {
 
             $builder = $db->table('link_names');
-            $builder->select('link_name');
+            $builder->select('id, link_name');
             $builder->where(array("link_name" => $post['link_name']));
         } else {
 
             $builder = $db->table('link_data');
-            $builder->select('title');
+            $builder->select('id, title');
             $builder->where(array("title" => $post['title']));
         }
 
@@ -33,17 +33,19 @@ class HomeModel extends Model
         $result_data = $result->getRow();
         $msg = array();
 
+
+
         if (empty($result_data)) {
             $status =  $builder->insert($post);
             $id = @$db->insertID();
 
             if ($status) {
-                $msg = array('st', 'success', 'msg' => "Successfully saved", "id" => $id);
+                $msg = array('st' => 'success', 'msg' => "Successfully saved", "id" => $id);
             } else {
-                $msg = array('st', 'failed', 'msg' => "already exist in database");
+                $msg = array('st' => 'failed', 'msg' => "something went wrong");
             }
         } else {
-            $msg = array('st', 'failed', 'msg' => "already exist in database");
+            $msg = array('st' => 'failed', 'msg' => "already exist in database", "id" => $result_data->id);
         }
 
 

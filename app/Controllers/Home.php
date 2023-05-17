@@ -3,7 +3,6 @@
 namespace App\Controllers;
 
 use App\Models\HomeModel;
-// use App\Models\GeneralModel;
 
 
 class Home extends BaseController
@@ -11,7 +10,6 @@ class Home extends BaseController
     public function __construct()
     {
         $this->model = new HomeModel();
-        // $this->gmodel = new GeneralModel();
         include('simple_html_dom.php');
     }
 
@@ -22,9 +20,6 @@ class Home extends BaseController
 
         $post = $this->request->getPost();
         if (!empty($post)) {
-            // $data = $this->model->add_scrape($post);
-            // return $this->response->setJSON($data);
-
 
             /**
              * link which need to scrape of stackoverflow
@@ -36,9 +31,6 @@ class Home extends BaseController
              * call function
              */
             $status = $this->process($link, $post);
-            echo '<pre>';
-            print_r($status);
-            exit;
         }
 
         return view('index', $data);
@@ -47,16 +39,21 @@ class Home extends BaseController
 
 
 
-
+    /**
+     * Method to execute of scrape process
+     * @param link string
+     * @param poatdata array
+     * @return array
+     */
     public function process(string $link, array $postdata)
     {
         ini_set('memory_limit', -1);
         $count = $this->get_content($link, true);
-
         $limit = 15;
         $pages = ceil((int) $count / $limit);
-        $pages = 3; // as of now we set limit 4 pages to retrived
+        $pages = 2; // as of now we set limit 4 pages to retrived
         $i = 1;
+        $st = 0;
 
         /**
          * Here i am inserting the link name & count
@@ -68,11 +65,10 @@ class Home extends BaseController
             'created_at' => date("Y-m-d H:i:s")
         );
 
-        $id = $this->model->add_scrape($link_data, false);
+        $save_link_data = $this->model->add_scrape($link_data, false);
 
+        $scrape_data = array();
 
-        return;
-        $data = array();
         for ($j = 1; $j < $pages; $j++) {
 
             $link_with_page = ($j == 1) ? $link : $link . "&page=$j";
@@ -81,16 +77,29 @@ class Home extends BaseController
             if (!empty($html)) {
                 // find all link
                 foreach ($html->find('.s-post-summary.js-post-summary') as $e) {
-                    $data[$i][] = array(
-                        'title' => $e->find('.s-link', 0)->plaintext,
-                        'votes' =>  $e->find('.s-post-summary--stats-item-number', 0),
-                        'answer' => $e->find('.s-post-summary--stats-item-number', 1),
-                        'accepted_ans' =>  empty($e->find('.svg-icon.iconCheckmarkSm', 0)) ? 0 : 1,
-                        'views' => $e->find('.s-post-summary--stats-item-number', 2)
-                    );
-                    echo '<pre>';
-                    print_r($data);
-                    exit;
+
+
+                    /**
+                     * insert scrape data
+                     */
+                    if (isset($save_link_data['id'])) {
+                        $scrape_data = array(
+                            'link_id' => $save_link_data['id'],
+                            'title' => $e->find('.s-link', 0)->plaintext,
+                            'votes' =>  $e->find('.s-post-summary--stats-item-number', 0),
+                            'answer' => $e->find('.s-post-summary--stats-item-number', 1),
+                            'accepted_ans' =>  empty($e->find('.svg-icon.iconCheckmarkSm', 0)) ? 0 : 1,
+                            'views' => $e->find('.s-post-summary--stats-item-number', 2)
+                        );
+
+                        // echo '<pre>';print_r($scrape_data);exit;
+                        $status =  $this->model->add_scrape($scrape_data);
+
+                        if ($status['st'] == "success") {
+                            $st++;
+                        }
+                    }
+
 
                     // echo  $i . ": " . $e->find('.s-link', 0)->plaintext . " | ";
                     // echo  $e->find('.s-post-summary--stats-item-unit', 0) . ": " . $e->find('.s-post-summary--stats-item-number', 0)   . " | ";
@@ -105,7 +114,7 @@ class Home extends BaseController
                 }
             }
         }
-        return $data;
+        return $st;
     }
 
 

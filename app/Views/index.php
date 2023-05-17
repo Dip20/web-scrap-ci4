@@ -25,7 +25,7 @@
                             <div class="col-md-4 mb-3">
                                 <div class="form-group">
                                     <label class="mb-2">Link Name</label>
-                                    <input type="text" name="linkname" id="linkname" placeholder="Enter lin kname" class="form-control" value="C" required>
+                                    <input type="text" name="link_name" id="link_name" placeholder="Enter link name" class="form-control" value="C" required>
                                 </div>
                             </div>
                         </div>
