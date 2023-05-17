@@ -23,7 +23,6 @@ class Home extends BaseController
 
             /**
              * link which need to scrape of stackoverflow
-             * don't forget to add pagesize
              */
             $link = $post['link'];
 
@@ -33,7 +32,7 @@ class Home extends BaseController
             $status = $this->process($link, $post);
 
             $session = session();
-            
+
             if ($status > 0) {
                 $session->setFlashdata('job_status', '1');
             } else {
@@ -41,10 +40,10 @@ class Home extends BaseController
             }
         }
 
+        $data['link'] = "index";
+
         return view('index', $data);
     }
-
-
 
 
     /**
@@ -56,15 +55,18 @@ class Home extends BaseController
     public function process(string $link, array $postdata)
     {
         ini_set('memory_limit', -1);
-        $count = $this->get_content($link, true);
+
+        $count = $this->get_content($link, true); //get the question count
         $limit = 15;
         $pages = ceil((int) $count / $limit);
         $pages = 2; // as of now we set limit 2 pages to retrived
+
         $i = 1;
         $st = 0;
+        $scrape_data = array();
 
         /**
-         * Here i am inserting the link name & count
+         * Here i am inserting the link name & questions count to 'link_names' tables  
          */
         $link_data = array(
             'link_name' => $postdata['link_name'],
@@ -75,7 +77,6 @@ class Home extends BaseController
 
         $save_link_data = $this->model->add_scrape($link_data, false);
 
-        $scrape_data = array();
 
         for ($j = 1; $j < $pages; $j++) {
 
@@ -88,7 +89,7 @@ class Home extends BaseController
 
 
                     /**
-                     * insert scrape data
+                     * preapre scrape data
                      */
                     if (isset($save_link_data['id'])) {
                         $scrape_data = array(
@@ -101,25 +102,22 @@ class Home extends BaseController
                             'created_at' => date("Y-m-d H:i:s")
                         );
 
+                        /**
+                         * insert to table
+                         */
                         $status =  $this->model->add_scrape($scrape_data);
 
                         if ($status['st'] == "success") {
                             $st++;
                         }
                     }
-
-
-                    // echo  $i . ": " . $e->find('.s-link', 0)->plaintext . " | ";
-                    // echo  $e->find('.s-post-summary--stats-item-unit', 0) . ": " . $e->find('.s-post-summary--stats-item-number', 0)   . " | ";
-                    // echo  $e->find('.s-post-summary--stats-item-unit', 1) . ": " . $e->find('.s-post-summary--stats-item-number', 1)   . " | ";
-                    // echo  "Accecpted: " . $e->find('.svg-icon.iconCheckmarkSm', 0)   . '|';
-                    // echo  $e->find('.s-post-summary--stats-item-unit', 2) . ": " . $e->find('.s-post-summary--stats-item-number', 2)   . '<br>';
                     $i++;
                 }
 
-                if ($j == 5) {
-                    break;
-                }
+                /** Testing */
+                // if ($j == 5) {
+                //     break;
+                // }
             }
         }
         return $st;
@@ -156,5 +154,19 @@ class Home extends BaseController
         }
 
         return $output;
+    }
+
+    /**
+     * View data
+     */
+
+    public function view_data()
+    {
+        $data = array();
+
+        $data = $this->model->get_data();
+        $data['link'] = "view_data";
+
+        return view('view_data', $data);
     }
 }

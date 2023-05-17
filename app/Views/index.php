@@ -10,7 +10,7 @@
             <h1 class="app-page-title">Add Scrape</h1>
 
             <?php if (isset($_SESSION['job_status'])) { ?>
-                <div class="alert alert-<?= @$_SESSION['job_status'] == 1 ? "success" : "warning" ?> alert-dismissible fade show" role="alert">
+                <div class="alert alert-<?= @$_SESSION['job_status'] == 1 ? "success" : "warning" ?> alert-dismissible fade show disapper" role="alert">
                     <strong>Done!</strong> <?= @$_SESSION['job_status'] == 1 ? "Scrape successfully completed" : "Already Completed or Duplicate data" ?>
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
@@ -64,5 +64,16 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
+
+
 <script>
-    <?= $this->endSection() ?>
+    <?php if (isset($_SESSION['job_status'])) { ?>
+        setTimeout(function() {
+            $(".disappear").fadeOut().remove();
+        }, 2000)
+
+    <?php } ?>
+</script>
+
+
+<?= $this->endSection() ?>
