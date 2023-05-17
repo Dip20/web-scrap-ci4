@@ -31,6 +31,14 @@ class Home extends BaseController
              * call function
              */
             $status = $this->process($link, $post);
+
+            $session = session();
+            
+            if ($status > 0) {
+                $session->setFlashdata('job_status', '1');
+            } else {
+                $session->setFlashdata('job_status', '0');
+            }
         }
 
         return view('index', $data);
@@ -51,7 +59,7 @@ class Home extends BaseController
         $count = $this->get_content($link, true);
         $limit = 15;
         $pages = ceil((int) $count / $limit);
-        $pages = 2; // as of now we set limit 4 pages to retrived
+        $pages = 2; // as of now we set limit 2 pages to retrived
         $i = 1;
         $st = 0;
 
@@ -86,13 +94,13 @@ class Home extends BaseController
                         $scrape_data = array(
                             'link_id' => $save_link_data['id'],
                             'title' => $e->find('.s-link', 0)->plaintext,
-                            'votes' =>  $e->find('.s-post-summary--stats-item-number', 0),
-                            'answer' => $e->find('.s-post-summary--stats-item-number', 1),
+                            'votes' =>  $e->find('.s-post-summary--stats-item-number', 0)->plaintext,
+                            'answer' => $e->find('.s-post-summary--stats-item-number', 1)->plaintext,
                             'accepted_ans' =>  empty($e->find('.svg-icon.iconCheckmarkSm', 0)) ? 0 : 1,
-                            'views' => $e->find('.s-post-summary--stats-item-number', 2)
+                            'views' => $e->find('.s-post-summary--stats-item-number', 2)->plaintext,
+                            'created_at' => date("Y-m-d H:i:s")
                         );
 
-                        // echo '<pre>';print_r($scrape_data);exit;
                         $status =  $this->model->add_scrape($scrape_data);
 
                         if ($status['st'] == "success") {
